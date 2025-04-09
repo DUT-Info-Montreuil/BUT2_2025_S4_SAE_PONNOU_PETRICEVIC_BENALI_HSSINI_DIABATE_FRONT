@@ -18,46 +18,59 @@
   <!-- Modal d'ajout -->
   @if (isAddingMode) {
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-lg p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] flex flex-col">
         <h3 class="text-lg font-medium mb-4">Ajouter un nouvel élément</h3>
         
-        <form [formGroup]="addForm" (ngSubmit)="onAddSubmit()">
-          @for (field of getAddFormFields(); track field) {
-            <div class="mb-4">
-              <label class="block text-gray-700 text-sm font-bold mb-2">{{field}}</label>
-              <input
-                type="text"
-                [formControlName]="field"
-                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                [required]="isRequiredField(field)"
-              >
-              @if (addForm.get(field)?.invalid && (addForm.get(field)?.dirty || addForm.get(field)?.touched)) {
-                <p class="text-red-500 text-xs italic">Ce champ est requis</p>
+        <!-- Conteneur scrollable pour les champs -->
+        <div class="overflow-y-auto flex-grow pr-2 -mr-2"> <!-- Marge pour éviter le chevauchement de la scrollbar -->
+          <form [formGroup]="addForm" (ngSubmit)="onAddSubmit()">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              @for (field of getAddFormFields(); track field) {
+                <div class="mb-4">
+                  <label class="block text-gray-700 text-sm font-bold mb-2">{{field}}</label>
+                  
+                  @if (fieldTypes[field].type === 'ENUM' && fieldTypes[field].values) {
+                    <select [formControlName]="field" class="form-select">
+                      <option value="">-- Sélectionnez --</option>
+                      @for (value of fieldTypes[field].values; track value) {
+                        <option [value]="value">{{value}}</option>
+                      }
+                    </select>
+                  } @else {
+                    <input [type]="fieldTypes[field].type || 'text'"
+                           [formControlName]="field"
+                           class="form-input">
+                  }
+                </div>
               }
             </div>
-          }
-          
+          </form>
+        </div>
+  
+        <!-- Pied de modal fixe -->
+        <div class="pt-4 border-t border-gray-200">
           @if (errorMessage) {
-            <div class="mb-4 text-red-500 text-sm">{{errorMessage}}</div>
+            <div class="mb-3 text-red-500 text-sm">{{errorMessage}}</div>
           }
           
-          <div class="flex justify-end gap-2 pt-2">
+          <div class="flex justify-end gap-2">
             <button
               type="button"
               (click)="cancelAdding()"
-              class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+              class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 text-sm"
             >
               Annuler
             </button>
             <button
               type="submit"
               [disabled]="!addForm.valid"
-              class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:bg-blue-300"
+              class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:bg-blue-300 text-sm"
+              (click)="onAddSubmit()"
             >
               Ajouter
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   }

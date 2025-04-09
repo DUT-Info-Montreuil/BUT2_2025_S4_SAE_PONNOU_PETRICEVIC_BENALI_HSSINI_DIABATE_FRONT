@@ -162,4 +162,20 @@ export class GenericTableService {
     return numericId;
   }
 
+
+
+  getColumnSchema(tableName: string, columnName: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiUrl}/${tableName}/schema/${columnName}`
+    ).pipe(
+      catchError(err => {
+        console.error(`Error fetching schema for ${columnName}:`, err);
+        return of({
+          type: 'text',
+          values: []
+        });
+      })
+    );
+  }
+
 }

@@ -288,22 +288,52 @@ startAdding(): void {
   this.initAddForm();
 }
 
-private initAddForm(): void {
-  const formControls: { [key: string]: FormControl } = {};
+fieldTypes: {[key: string]: {type: string, values?: string[]}} = {};
+
+// Modifiez initAddForm()
+private async initAddForm(): Promise<void> {
+  this.addForm = new FormGroup({});
+  this.fieldTypes = {};
   
   if (this.filteredData.length > 0) {
     const sampleItem = this.filteredData[0];
     
+    // Chargez d'abord tous les schémas
+    await this.loadColumnSchemas(sampleItem);
+    
+    // Puis créez les contrôles
     Object.keys(sampleItem).forEach(key => {
-      if (!this.isIdColumn(key)) { // On exclut les champs ID
-        formControls[key] = new FormControl('');
+      if (!this.isIdColumn(key)) {
+        this.addForm.addControl(key, new FormControl(''));
       }
     });
   }
-  
-  this.addForm = new FormGroup(formControls);
-  this.errorMessage = null;
 }
+
+// AJOUTEZ cette nouvelle méthode privée
+private async loadColumnSchemas(sampleItem: any): Promise<void> {
+  const fields = Object.keys(sampleItem).filter(key => !this.isIdColumn(key));
+  
+  for (const field of fields) {
+    try {
+      const schema = await this.genericTableService.getColumnSchema(
+        this.tableName, 
+        field
+      ).toPromise();
+      
+      this.fieldTypes[field] = schema;
+    } catch (e) {
+      console.error(`Failed to load schema for ${field}:`, e);
+      this.fieldTypes[field] = { type: 'text' };
+    }
+  }
+}
+
+
+getInputType(field: string): string {
+  return this.fieldTypes[field]?.type || 'text';
+}
+
 
 getAddFormFields(): string[] {
   return this.addForm ? Object.keys(this.addForm.controls) : [];
@@ -352,5 +382,7 @@ private getUserFriendlyError(err: any): string {
   }
   return err.message || 'Erreur lors de la création';
 }
+
+
 
 }
